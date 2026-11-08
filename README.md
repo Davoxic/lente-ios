@@ -8,6 +8,10 @@ Progetto indipendente, non affiliato né approvato da Instagram o Meta.
 
 ## Cosa calcola
 
+**Cerca un account** — scrivi un nome utente e vedi subito la tua situazione con quella persona: ti segue, lo segui, da quando, quanti like e commenti gli hai lasciato, se è tra i non ricambiati, gli amici stretti, i bloccati o le richieste in sospeso. Un tasto apre il profilo vero nell'app Instagram, dove sei già collegato — è lì che si guardano gli account privati.
+
+La ricerca lavora **solo sugli account che compaiono già nei tuoi dati**. L'app non interroga Instagram per cercare profili altrui e non scarica follower di altri account: servirebbe l'API privata, che fa bannare l'account e raccoglie dati di persone terze.
+
 **Dall'export dei dati** (sorgente principale)
 
 | | |
@@ -26,6 +30,7 @@ Progetto indipendente, non affiliato né approvato da Instagram o Meta.
 ## Cosa non calcola, e perché
 
 - **Chi visita il tuo profilo.** Instagram non espone questo dato a nessuna app. Le app che promettono gli "stalker" tirano a indovinare o usano API private.
+- **I follower di un account che non è il tuo.** Fuori dall'API privata non è ottenibile, e con l'API privata si finisce bannati.
 - **Chi ti ha tolto il follow, in tempo reale.** Lo ricavi confrontando due import successivi, non c'è altro modo pulito.
 - **La lista follower via API ufficiale.** L'API dà i conteggi, non i nomi. Per la reciprocità serve l'export.
 
@@ -92,7 +97,7 @@ Con un Apple ID gratuito l'app scade dopo 7 giorni e va reinstallata; con un acc
 ## Privacy
 
 - L'archivio ZIP viene letto in locale e scartato: non viene copiato né caricato da nessuna parte.
-- Gli snapshot salvano solo nomi utente e conteggi, in un JSON nella cartella Documenti dell'app.
+- Gli snapshot e l'ultima analisi salvano solo nomi utente, date e conteggi, in JSON nella cartella Documenti dell'app, così riaprendola ritrovi tutto senza reimportare.
 - Il token dell'API sta nel portachiavi, marcato come non sincronizzabile.
 - Le uniche connessioni di rete che l'app apre sono verso `graph.instagram.com`, e solo se configuri la sorgente 2.
 - **Cancella tutti i dati locali** nella scheda Dati rimuove tutto.
@@ -107,9 +112,9 @@ Sources/
   App/        LenteApp, AppState
   Models/     Account, Snapshot, AnalysisResult
   Import/     ZipArchive, ExportParser, ManualImport
-  Analysis/   Analyzer, SnapshotStore
+  Analysis/   Analyzer, ProfileLookup, SnapshotStore, AnalysisArchive
   Remote/     GraphAPIClient, TokenStore
-  UI/         schermate SwiftUI
+  UI/         schermate SwiftUI (Cerca, Panoramica, Relazioni, Attività, Dati)
 .github/workflows/build-ipa.yml pipeline di build
 ```
 

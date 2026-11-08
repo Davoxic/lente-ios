@@ -44,6 +44,8 @@ targets:
           NSAllowsArbitraryLoads: false
         ITSAppUsesNonExemptEncryption: false
         UIUserInterfaceStyle: Automatic
+        LSApplicationQueriesSchemes:
+          - instagram
         CFBundleURLTypes:
           - CFBundleURLName: com.lente.analyzer
             CFBundleURLSchemes:

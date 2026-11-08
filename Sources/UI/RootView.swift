@@ -6,6 +6,8 @@ struct RootView: View {
 
     var body: some View {
         TabView {
+            SearchView()
+                .tabItem { Label("Cerca", systemImage: "magnifyingglass") }
             OverviewView()
                 .tabItem { Label("Panoramica", systemImage: "chart.line.uptrend.xyaxis") }
             RelationsView()

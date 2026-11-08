@@ -42,6 +42,7 @@ final class AppState: ObservableObject {
     @Published var errorMessage: String?
     @Published var snapshots: [Snapshot] = []
     @Published var activeSource: Source = .export
+    @Published var index = ProfileIndex()
 
     // Official API state
     @Published var graphProfile: GraphProfile?
@@ -53,6 +54,11 @@ final class AppState: ObservableObject {
 
     init() {
         snapshots = store.snapshots
+        // Restore the last analysis so reopening the app shows data straight away.
+        if let saved = AnalysisArchive.load() {
+            result = saved.result
+            index = saved.index
+        }
     }
 
     var latestDiff: SnapshotDiff? { store.latestDiff }
@@ -112,11 +118,14 @@ final class AppState: ObservableObject {
             }
             progressNote = "Calcolo le metriche…"
             let analysis = Analyzer.analyze(contents, source: .dataExport)
+            let lookup = ProfileIndex(contents)
             let snapshot = Analyzer.snapshot(from: contents, source: .dataExport)
             store.append(snapshot)
             snapshots = store.snapshots
             result = analysis
+            index = lookup
             activeSource = .export
+            AnalysisArchive.save(result: analysis, index: lookup)
         }
     }
 
@@ -129,12 +138,15 @@ final class AppState: ObservableObject {
             return
         }
         let analysis = Analyzer.analyze(contents, source: .manual)
+        let lookup = ProfileIndex(contents)
         let snapshot = Analyzer.snapshot(from: contents, source: .manual)
         store.append(snapshot)
         snapshots = store.snapshots
         result = analysis
+        index = lookup
         activeSource = .manual
         errorMessage = nil
+        AnalysisArchive.save(result: analysis, index: lookup)
     }
 
     // MARK: - Official API
@@ -197,8 +209,10 @@ final class AppState: ObservableObject {
 
     func deleteEverything() {
         store.deleteAll()
+        AnalysisArchive.clear()
         snapshots = []
         result = nil
+        index = ProfileIndex()
         graphProfile = nil
         graphMedia = []
         graphInsights = []
