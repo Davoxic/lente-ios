@@ -140,13 +140,22 @@ struct Analyzer {
         return counts
     }
 
+    /// Written out as statements rather than a map/sorted/prefix chain: the
+    /// inferred chain pushed the type checker past its time budget.
     private static func ranked(_ counts: [String: Int], limit: Int) -> [CountedAccount] {
-        counts.map { CountedAccount(username: $0.key, count: $0.value) }
-            .sorted { lhs, rhs in
-                lhs.count == rhs.count ? lhs.username < rhs.username : lhs.count > rhs.count
-            }
-            .prefix(limit)
-            .map { $0 }
+        var items: [CountedAccount] = []
+        items.reserveCapacity(counts.count)
+        for (username, count) in counts {
+            items.append(CountedAccount(username: username, count: count))
+        }
+        items.sort { (lhs: CountedAccount, rhs: CountedAccount) -> Bool in
+            if lhs.count != rhs.count { return lhs.count > rhs.count }
+            return lhs.username < rhs.username
+        }
+        if items.count > limit {
+            items = Array(items.prefix(limit))
+        }
+        return items
     }
 
     static func monthStart(_ date: Date, calendar: Calendar = .current) -> Date {
