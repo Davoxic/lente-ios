@@ -1,0 +1,15 @@
+# Generato da XcodeGen, non va versionato
+Lente.xcodeproj/
+
+# Build
+build/
+DerivedData/
+Payload/
+*.ipa
+*.dSYM.zip
+
+# Generato dal project.yml
+Support/Info.plist
+
+# macOS
+.DS_Store
