@@ -68,6 +68,22 @@ struct OverviewView: View {
 
         growthCard()
 
+        NavigationLink {
+            ActivityView(embedded: true)
+        } label: {
+            Card {
+                HStack {
+                    Label("Attività e abitudini", systemImage: "waveform.path.ecg")
+                        .font(.subheadline.weight(.medium))
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+        .buttonStyle(.plain)
+
         if !result.warnings.isEmpty {
             Card(title: "Da sapere") {
                 VStack(alignment: .leading, spacing: 8) {

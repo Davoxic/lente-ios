@@ -8,6 +8,12 @@ Progetto indipendente, non affiliato né approvato da Instagram o Meta.
 
 ## Cosa calcola
 
+**Monitora qualsiasi profilo** — aggiungi un profilo alla lista e, quando vuoi, registri i suoi numeri: follower, seguiti, contenuti. L'app tiene lo storico, la variazione rispetto alla rilevazione precedente, la media al giorno e il grafico nel tempo.
+
+Due modi per registrare. **Automatico**: endpoint ufficiale *Business Discovery*, che funziona se il tuo account è professionale e quello osservato è professionale e pubblico. **A mano**: apri il profilo col tasto dell'app, leggi i numeri, li scrivi — accetta anche le forme abbreviate che Instagram mostra, tipo `12,5K` o `1,2 mln`. Il tuo account entra nella lista da solo al primo import, con i numeri dell'export come prima rilevazione.
+
+Il **numero** di follower si ottiene per qualsiasi profilo. **Chi** sono quei follower, no: per il tuo account viene dall'export, per gli account altrui non esiste alcuna via lecita — l'unico modo sarebbe l'API privata dell'app, che fa bannare l'account e raccoglie dati di persone terze.
+
 **Cerca un account** — scrivi un nome utente e vedi subito la tua situazione con quella persona: ti segue, lo segui, da quando, quanti like e commenti gli hai lasciato, se è tra i non ricambiati, gli amici stretti, i bloccati o le richieste in sospeso. Un tasto apre il profilo vero nell'app Instagram, dove sei già collegato — è lì che si guardano gli account privati.
 
 La ricerca lavora **solo sugli account che compaiono già nei tuoi dati**. L'app non interroga Instagram per cercare profili altrui e non scarica follower di altri account: servirebbe l'API privata, che fa bannare l'account e raccoglie dati di persone terze.
@@ -110,11 +116,11 @@ Support/Info.plist              generato da project.yml
 Resources/Assets.xcassets       icona e colore accento
 Sources/
   App/        LenteApp, AppState
-  Models/     Account, Snapshot, AnalysisResult
+  Models/     Account, Snapshot, AnalysisResult, Watchlist, CountText
   Import/     ZipArchive, ExportParser, ManualImport
   Analysis/   Analyzer, ProfileLookup, SnapshotStore, AnalysisArchive
   Remote/     GraphAPIClient, TokenStore
-  UI/         schermate SwiftUI (Cerca, Panoramica, Relazioni, Attività, Dati)
+  UI/         schermate SwiftUI (Monitorati, Cerca, Panoramica, Relazioni, Dati)
 .github/workflows/build-ipa.yml pipeline di build
 ```
 

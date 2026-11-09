@@ -43,6 +43,7 @@ final class AppState: ObservableObject {
     @Published var snapshots: [Snapshot] = []
     @Published var activeSource: Source = .export
     @Published var index = ProfileIndex()
+    @Published var watched: [WatchedProfile] = []
 
     // Official API state
     @Published var graphProfile: GraphProfile?
@@ -51,9 +52,11 @@ final class AppState: ObservableObject {
     @Published var hasToken: Bool = TokenStore.hasToken
 
     private let store = SnapshotStore()
+    private let watchlist = WatchlistStore()
 
     init() {
         snapshots = store.snapshots
+        watched = watchlist.profiles
         // Restore the last analysis so reopening the app shows data straight away.
         if let saved = AnalysisArchive.load() {
             result = saved.result
@@ -126,6 +129,16 @@ final class AppState: ObservableObject {
             index = lookup
             activeSource = .export
             AnalysisArchive.save(result: analysis, index: lookup)
+
+            // The owner's own account joins the watchlist automatically, with the
+            // counts the export just produced as its first reading.
+            if let own = contents.username, addWatched(own, isSelf: true),
+               let mine = watchlist.profiles.first(where: { $0.username.lowercased() == own.lowercased() }) {
+                recordReading(followers: analysis.followerCount,
+                              following: analysis.followingCount,
+                              source: .ownExport,
+                              for: mine)
+            }
         }
     }
 
@@ -200,6 +213,84 @@ final class AppState: ObservableObject {
         }
     }
 
+
+    // MARK: - Watchlist
+
+    @discardableResult
+    func addWatched(_ username: String, isSelf: Bool = false) -> Bool {
+        guard watchlist.add(username: username, isSelf: isSelf) != nil else {
+            errorMessage = "\"\(username)\" non è un nome utente valido."
+            return false
+        }
+        watched = watchlist.profiles
+        return true
+    }
+
+    func removeWatched(_ profile: WatchedProfile) {
+        watchlist.remove(profile)
+        watched = watchlist.profiles
+    }
+
+    func updateNote(_ note: String?, for profile: WatchedProfile) {
+        let trimmed = note?.trimmingCharacters(in: .whitespacesAndNewlines)
+        watchlist.updateNote((trimmed?.isEmpty ?? true) ? nil : trimmed, for: profile.id)
+        watched = watchlist.profiles
+    }
+
+    func recordReading(followers: Int?, following: Int?, posts: Int? = nil,
+                       source: ProfileReading.Source, for profile: WatchedProfile) {
+        guard followers != nil || following != nil else { return }
+        let reading = ProfileReading(followers: followers, following: following,
+                                     posts: posts, source: source)
+        watchlist.record(reading, for: profile.id)
+        watched = watchlist.profiles
+    }
+
+    func deleteReading(_ reading: ProfileReading, from profile: WatchedProfile) {
+        watchlist.deleteReading(reading.id, from: profile.id)
+        watched = watchlist.profiles
+    }
+
+    func current(_ profile: WatchedProfile) -> WatchedProfile {
+        watchlist.profile(with: profile.id) ?? profile
+    }
+
+    /// Tries the official endpoint. Returns nil on success, otherwise the reason,
+    /// so the screen can offer manual entry instead of just showing a dead end.
+    func fetchReading(for profile: WatchedProfile) async -> String? {
+        guard let token = TokenStore.load() else {
+            return "Nessun token salvato: la rilevazione automatica ha bisogno dell'API ufficiale. Puoi inserire i numeri a mano."
+        }
+        isWorking = true
+        progressNote = "Chiedo i numeri di @\(profile.username)…"
+        defer { isWorking = false; progressNote = nil }
+
+        let client = GraphAPIClient(token: token)
+        do {
+            if profile.isSelf {
+                let me = try await client.profile()
+                recordReading(followers: me.followersCount,
+                              following: me.followsCount,
+                              posts: me.mediaCount,
+                              source: .businessDiscovery,
+                              for: profile)
+                return nil
+            }
+            let found = try await client.businessDiscovery(username: profile.username)
+            guard found.followersCount != nil || found.followsCount != nil else {
+                return "L'API non ha restituito numeri per @\(profile.username)."
+            }
+            recordReading(followers: found.followersCount,
+                          following: found.followsCount,
+                          posts: found.mediaCount,
+                          source: .businessDiscovery,
+                          for: profile)
+            return nil
+        } catch {
+            return error.localizedDescription
+        }
+    }
+
     // MARK: - Data management
 
     func deleteSnapshot(_ snapshot: Snapshot) {
@@ -210,6 +301,8 @@ final class AppState: ObservableObject {
     func deleteEverything() {
         store.deleteAll()
         AnalysisArchive.clear()
+        watchlist.deleteAll()
+        watched = []
         snapshots = []
         result = nil
         index = ProfileIndex()

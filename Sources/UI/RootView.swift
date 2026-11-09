@@ -6,14 +6,14 @@ struct RootView: View {
 
     var body: some View {
         TabView {
+            WatchlistView()
+                .tabItem { Label("Monitorati", systemImage: "binoculars") }
             SearchView()
                 .tabItem { Label("Cerca", systemImage: "magnifyingglass") }
             OverviewView()
                 .tabItem { Label("Panoramica", systemImage: "chart.line.uptrend.xyaxis") }
             RelationsView()
                 .tabItem { Label("Relazioni", systemImage: "person.2") }
-            ActivityView()
-                .tabItem { Label("Attività", systemImage: "waveform.path.ecg") }
             DataView()
                 .tabItem { Label("Dati", systemImage: "tray.and.arrow.down") }
         }

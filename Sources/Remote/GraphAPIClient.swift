@@ -48,6 +48,21 @@ struct GraphInsightValue: Equatable {
     var total: Int
 }
 
+
+/// What the official Business Discovery endpoint returns about another account.
+/// Note what is absent: there is no follower *list* here, and there is no way to
+/// ask for one. Instagram does not expose the membership of anyone's follower
+/// graph through any official endpoint.
+struct DiscoveredProfile: Equatable {
+    var username: String
+    var name: String?
+    var biography: String?
+    var website: String?
+    var followersCount: Int?
+    var followsCount: Int?
+    var mediaCount: Int?
+}
+
 enum GraphAPIError: LocalizedError {
     case missingToken
     case transport(String)
@@ -158,6 +173,40 @@ struct GraphAPIClient {
             throw GraphAPIError.decoding
         }
         return envelope.data
+    }
+
+
+    /// Public counters for another account, through the official Business
+    /// Discovery endpoint. Works only when the caller's account is a professional
+    /// one and the target is a public professional account; everything else comes
+    /// back as an error the UI turns into "inseriscilo a mano".
+    func businessDiscovery(username rawUsername: String) async throws -> DiscoveredProfile {
+        let target = rawUsername.trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "@", with: "")
+        guard !target.isEmpty else { throw GraphAPIError.api("Nome utente vuoto.") }
+
+        let inner = "username,name,biography,website,followers_count,follows_count,media_count"
+        let field = "business_discovery.username(\(target)){\(inner)}"
+        let data = try await fetch(path: "me", query: ["fields": field])
+
+        guard let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let discovery = object["business_discovery"] as? [String: Any] else {
+            throw GraphAPIError.api("L'API non ha restituito dati per @\(target). Succede se l'account è privato, personale, o se il tuo non è un account professionale.")
+        }
+
+        func number(_ key: String) -> Int? {
+            (discovery[key] as? NSNumber)?.intValue
+        }
+
+        return DiscoveredProfile(
+            username: (discovery["username"] as? String) ?? target,
+            name: discovery["name"] as? String,
+            biography: discovery["biography"] as? String,
+            website: discovery["website"] as? String,
+            followersCount: number("followers_count"),
+            followsCount: number("follows_count"),
+            mediaCount: number("media_count")
+        )
     }
 
     /// Account insights for the last `days` days. Falls back through

@@ -4,12 +4,26 @@ import Charts
 @MainActor
 struct ActivityView: View {
     @EnvironmentObject private var state: AppState
+    /// Pushed from Panoramica, so it must not open a second navigation stack.
+    var embedded: Bool = false
 
     private static let weekdayNames = ["Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab"]
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
+        if embedded {
+            scrollContent
+                .navigationTitle("Attività")
+                .navigationBarTitleDisplayMode(.inline)
+        } else {
+            NavigationStack {
+                scrollContent
+                    .navigationTitle("Attività")
+            }
+        }
+    }
+
+    private var scrollContent: some View {
+        ScrollView {
                 VStack(spacing: 16) {
                     if let result = state.result {
                         if result.topLiked.isEmpty && result.ownPostsByMonth.isEmpty {
@@ -27,11 +41,9 @@ struct ActivityView: View {
                                    systemImage: "waveform.path.ecg")
                     }
                 }
-                .padding(16)
-            }
-            .background(Color(.systemGroupedBackground))
-            .navigationTitle("Attività")
+            .padding(16)
         }
+        .background(Color(.systemGroupedBackground))
     }
 
     // MARK: - Attention
